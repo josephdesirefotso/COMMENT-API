@@ -8,8 +8,10 @@ namespace Comments.API.Services
 {
     public class CloudMailService : IMailService
     {
-        private string _mailTo = "admin@mycompany.com";
-        private string _mailFrom = "noreply@mycompany.com";
+
+
+        private string _mailTo = Startup.Configuration["mailSettings:mailToAddress"];
+        private string _mailFrom = Startup.Configuration["mailSettings:mailFromAddress"];
 
         public void Send(String subject, string message)
         {
@@ -19,10 +21,6 @@ namespace Comments.API.Services
             Debug.WriteLine($"Message: {message}");
 
         }
-        //public void Send(string subject, string message)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
+       
     }
 }

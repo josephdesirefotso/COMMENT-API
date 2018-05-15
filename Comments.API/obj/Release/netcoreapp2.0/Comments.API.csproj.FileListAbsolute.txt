@@ -1,0 +1,11 @@
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\bin\Release\netcoreapp2.0\Comments.API.deps.json
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\bin\Release\netcoreapp2.0\Comments.API.runtimeconfig.json
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\bin\Release\netcoreapp2.0\Comments.API.runtimeconfig.dev.json
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\bin\Release\netcoreapp2.0\Comments.API.dll
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\bin\Release\netcoreapp2.0\Comments.API.pdb
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\obj\Release\netcoreapp2.0\Comments.API.csprojResolveAssemblyReference.cache
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\obj\Release\netcoreapp2.0\Comments.API.csproj.CoreCompileInputs.cache
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\obj\Release\netcoreapp2.0\Comments.API.AssemblyInfoInputs.cache
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\obj\Release\netcoreapp2.0\Comments.API.AssemblyInfo.cs
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\obj\Release\netcoreapp2.0\Comments.API.dll
+C:\Users\Joseph\Desktop\Pluralsight workshop\Comment.API\Comments.API\Comments.API\obj\Release\netcoreapp2.0\Comments.API.pdb

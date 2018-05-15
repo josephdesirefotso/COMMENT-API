@@ -10,17 +10,18 @@ namespace Comments.API.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+        public bool Seen { get; set; }
 
-    //    public int NumberOfReplies
-    //    {
-    //        get
-    //        {
-    //            return Replies.Count;
-    //        }
-    //    }
+        public int NumberOfReplies
+        {
+            get
+            {
+                return Replies.Count;
+            }
+        }
 
-    //    public IReadOnlyCollection<ReplyDto> Replies { get; set; }
-    //    = new List<ReplyDto>();
+        public IReadOnlyCollection<ReplyDto> Replies { get; set; }
+        = new List<ReplyDto>();
 
     }
 }

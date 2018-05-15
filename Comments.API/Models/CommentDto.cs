@@ -10,8 +10,9 @@ namespace Comments.API.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-       //public IEnumerable<ReplyDto> Replies { get; set; }
-       public int NumberOfReplies { get
+        public bool Seen { get; set; }
+        //public IEnumerable<ReplyDto> Replies { get; set; }
+        public int NumberOfReplies { get
             {
                 return Replies.Count;
             }
@@ -20,5 +21,10 @@ namespace Comments.API.Models
 
         public ICollection<ReplyDto> Replies { get; set; }
         = new List<ReplyDto>();
+
+        public static implicit operator CommentDto(bool v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

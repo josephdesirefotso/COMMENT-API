@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Comments.API.Entities;
+using Comments.API.Models;
+using Comments.API.Services;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,50 +14,143 @@ namespace Comments.API.Controllers
     [Route("api/comments")]
     public class CommentsController : Controller
     {
+        private ICommentRepository _commentRepository;
+
+        public CommentsController(ICommentRepository commentRepository)
+        {
+            _commentRepository = commentRepository;
+        }
+
 
         [HttpGet()]
         public IActionResult GetComments()
         {
-            return Ok(CommentsDataStore.Current.Comments);
 
-            //var temp = new JsonResult(CommentsDataStore.Current.comments);
-            //temp.StatusCode = 200;
-            //return temp;
-        
-         //   return new JsonResult(CommentsDataStore.Current.comments);
-            
+            var commentEntities = _commentRepository.GetComments();
 
-            //return new JsonResult(new List<object>()
-            //    {
-            //        new {id=1, Name="Paragraph1" },
-            //        new {id=2, Name="Paragraph2" },
-            //        new {id=3, Name="Paragraph3" },
-            //        new {id=4, Name="Paragraph4" },
-            //        new {id=5, Name="Paragraph5" }
+            var results = Mapper.Map<IEnumerable<CommentWithoutRepliesDto>>(commentEntities);
 
-            //    });
+            return Ok(results);
 
-        }   
+    }
 
         [HttpGet("{id}")]
 
-        public IActionResult GetComment(int id)
+        public IActionResult GetComment(int id, bool includeReplies = false)
         {
-            // find comment 
-            var commentToReturn = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == id);
-            if (commentToReturn == null)
+            var comment = _commentRepository.GetComment(id, includeReplies);
+            if (comment == null)
+            {
+                return NotFound();
+            }
+            if (includeReplies)
+            {
+                var commentResult = Mapper.Map<CommentDto>(comment);
+                return Ok(commentResult);
+
+            }
+
+
+            var commentWithoutRepliesResult = Mapper.Map<CommentWithoutRepliesDto>(comment);
+            return Ok(commentWithoutRepliesResult);
+
+
+               
+        }
+
+        //[HttpPut("{commentId}/{id}")]
+        //public IActionResult UpdateComments(int commentId, int id,
+        //[FromBody] CommentDto comment)
+        //{
+        //    if (comment == null)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    if (comment.Description == comment.Name)
+        //    {
+        //        ModelState.AddModelError("Description", "The provided description should be different from the name.");
+        //    }
+
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
+
+        //    var comments = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
+
+        //    if (comment == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    var repliesFromStore = comment.Replies.FirstOrDefault(r =>
+        //    r.Id == id);
+
+        //    if (replyFromStore == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    commentFromStore.Name = comment.Name;
+        //    commentFromStore.Description = comment.Description;
+
+        //    return NoContent();
+        //}
+
+        [HttpPatch("{commentId}/{id}")]
+        public IActionResult PartiallyUpdateComment(int commentId, int id,
+            [FromBody] JsonPatchDocument<CommentForUpdateDto> patchDoc)
+        {
+            if (patchDoc == null)
+            {
+                return BadRequest();
+            }
+
+            var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
+            if (comment == null)
             {
                 return NotFound();
             }
 
-            return Ok(commentToReturn);
+            var commentFromStore = comment.Replies.FirstOrDefault(c => c.Id == id);
+            if (commentFromStore == null)
+            {
+                return NotFound();
+            }
 
+            var commentToPatch =
+                   new CommentForUpdateDto()
+                   {
+                       Name = commentFromStore.Name,
+                       Description = commentFromStore.Description
+                   };
 
-            //return new JsonResult(
-            //    CommentsDataStore.Current.comments.FirstOrDefault(c => c.Id == id)
-            //    );
+            patchDoc.ApplyTo(commentToPatch, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (commentToPatch.Description == commentToPatch.Name)
+            {
+                ModelState.AddModelError("Description", "The provided description should be different from the name.");
+            }
+
+            TryValidateModel(commentToPatch);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            commentFromStore.Name = commentToPatch.Name;
+            commentFromStore.Description = commentToPatch.Description;
+
+            return NoContent();
         }
-            
+
 
     }
 }

@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 namespace Comments.API
 {
     public class CommentsDataStore
-    {
-        public static CommentsDataStore Current { get; } = new CommentsDataStore();
+    { 
+        public static CommentsDataStore Current {get; } = new CommentsDataStore();
         public List<CommentDto> Comments { get; set; }
 
-        public CommentsDataStore() 
+        public CommentsDataStore()
         {
-            // init dummy data
-            Comments = new List<CommentDto>()
+        // init dummy data
+        Comments = new List<CommentDto>()
             {
                 new CommentDto()
                 {
@@ -53,32 +53,32 @@ namespace Comments.API
 
                 },
                 new CommentDto()
-                {
-                    Id = 2,
+        {
+            Id = 2,
                     Name = "Paragraph2",
                     Description = "The compliler is not working properly"
                 },
                 new CommentDto()
-                {
-                    Id = 3,
+        {
+            Id = 3,
                     Name = "Paragraph3",
                     Description = "I did not understand the exercise"
                 },
                 new CommentDto()
-                {
-                    Id = 4,
+        {
+            Id = 4,
                     Name = "Paragraph4",
                     Description = "I do have a beter way to solve it"
                 },
                 new CommentDto()
-                {
-                    Id = 5,
+        {
+            Id = 5,
                     Name = "Paragraph5",
                     Description = "Great tool!!!"
                 },
 
             };
-        }
+}
     }
 }
 

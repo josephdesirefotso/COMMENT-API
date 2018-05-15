@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Comments.API.Services
 {
-    interface IMailService
+    public interface IMailService
     {
         void Send(string subject, string message);
     }

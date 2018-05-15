@@ -1,4 +1,6 @@
-﻿using Comments.API.Services;
+﻿using AutoMapper;
+using Comments.API.Models;
+using Comments.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -7,19 +9,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Comments.API.Models
+namespace Comments.API.Controllers
 {
     [Route("api/comments")]
     public class RepliesController : Controller 
     {
         private ILogger<RepliesController> _logger;
-        private IMailService _mailService; 
+        private IMailService _mailService;
+        private ICommentRepository _commentRepository;
+       // private ICommentRepository commentRepository;
 
         public RepliesController(ILogger<RepliesController> logger,
-            IMailService mailService)
+            IMailService mailService,
+            ICommentRepository commentRepository)
         {
             _logger = logger;
-            _mailService = mailService; 
+            _mailService = mailService;
+            _commentRepository = commentRepository;
+
         }
 
         [HttpGet("{commentId}/replies")]
@@ -27,52 +34,48 @@ namespace Comments.API.Models
         {
             try
             {
-                //throw new Exception("Exception sample");
-
-                var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
-                if (comment == null)
+ 
+                if (!_commentRepository.CommentExists(commentId))
                 {
-                    _logger.LogInformation($"Comment with id {commentId} wasn't found when accessing replies.");
+                    _logger.LogInformation($"Comment with id {commentId} was not found when accessing replies.");
                     return NotFound();
                 }
-                return Ok(comment.Replies);
+
+                var repliesForComment = _commentRepository.GetRepliesForComment(commentId);
+                var repliesForCommentResults =
+                                Mapper.Map<IEnumerable<ReplyDto>>(repliesForComment);
+
+                return Ok(repliesForCommentResults);
+
             }
             catch (Exception ex)
             {
                 _logger.LogCritical($"Exception while getting replies for comment with id {commentId}.", ex);
                 return StatusCode(500, "A problem happened while handling your request.");
-                
-                
-                // throw;
+
             }
 
-            //var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
-            //if (comment == null)
-            //{
-            //    _logger.LogInformation($"Comment with id {commentId} wasn't found when accessing replies.");
-            //    return NotFound();
-            //}
-            //return Ok(comment.Replies);
         }
 
         [HttpGet("{commentId}/replies/{id}", Name = "GetReply")]
         public IActionResult GetReply(int commentId, int id)
         {
-            var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
-
-            if (comment == null)
+            if (!_commentRepository.CommentExists(commentId))
             {
                 return NotFound();
             }
 
-            var reply = comment.Replies.FirstOrDefault(r => r.Id == commentId);
+            var reply = _commentRepository.GetReplyForComment(commentId, id);
 
             if (reply == null)
             {
                 return NotFound();
             }
 
-            return Ok(reply);
+            var replyResult = Mapper.Map<ReplyDto>(reply);
+
+            return Ok(replyResult);
+
         }
 
         [HttpPost("{commentId}/replies")]
@@ -93,32 +96,25 @@ namespace Comments.API.Models
                 return BadRequest(ModelState);
             }
 
-            var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
-
-            if (comment == null)
+            if (!_commentRepository.CommentExists(commentId))
             {
                 return NotFound();
             }
-
-            // To be improved
-            var maxReplyId = CommentsDataStore.Current.Comments.SelectMany(
-                c => c.Replies).Max(r => r.Id);
-
-            //int maxReplyId = 0;
-            var finalReply = new ReplyDto()
+            var finalReply = Mapper.Map<Entities.Reply>(reply);
+            _commentRepository.AddReplyForComment(commentId, finalReply);
+            
+            if (!_commentRepository.Save())
             {
-                Id = ++maxReplyId,
-                //Id = ++maxReply,
-                Name = reply.Name,
-                Description = reply.Description
-            };
+                return StatusCode(500, "A problem happened while handling your request.");
+            }
 
-            comment.Replies.Add(finalReply);
+            //comment.Replies.Add(finalReply);
+            var createdReplyToReturn = Mapper.Map<Models.ReplyDto>(finalReply);
 
             return CreatedAtRoute("GetReply", new
-           {
-                commentId, id = finalReply.Id}, finalReply);
+            { commentId = commentId, id = createdReplyToReturn.Id }, createdReplyToReturn);
 
+               //commentId, id = finalReply.Id }, finalReply);
         }
 
         [HttpPut("{commentId}/replies/{id}")]
@@ -139,23 +135,23 @@ namespace Comments.API.Models
                 return BadRequest(ModelState);
             }
 
-            var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
-
-            if (comment == null)
+            if (!_commentRepository.CommentExists(commentId))
             {
                 return NotFound();
             }
 
-            var replyFromStore = comment.Replies.FirstOrDefault(p =>
-            p.Id == id);
-
-            if (replyFromStore == null)
+            var replyEntity = _commentRepository.GetReplyForComment(commentId, id);
+            if (replyEntity == null)
             {
                 return NotFound();
             }
 
-            replyFromStore.Name = reply.Name;
-            replyFromStore.Description = reply.Description;
+            Mapper.Map(reply, replyEntity);
+
+            if (!_commentRepository.Save())
+                {
+                    return StatusCode(500, "A problem happened while handling your request.");
+                }
 
             return NoContent();
         }
@@ -170,27 +166,17 @@ namespace Comments.API.Models
                 return BadRequest();
             }
 
-            var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
-
-            if (comment == null)
+            if (!_commentRepository.CommentExists(commentId))
             {
                 return NotFound();
             }
 
-            var replyFromStore = comment.Replies.FirstOrDefault(p =>
-            p.Id == id);
-
-            if (replyFromStore == null)
+            var replyEntity = _commentRepository.GetReplyForComment(commentId, id);
+            if (replyEntity == null)
             {
                 return NotFound();
             }
-
-            var replyToPatch =
-                new ReplyForUpdateDto()
-                {
-                    Name = replyFromStore.Name,
-                    Description = replyFromStore.Description
-                };
+            var replyToPatch = Mapper.Map<ReplyForUpdateDto>(replyEntity);
 
             patchDoc.ApplyTo(replyToPatch, ModelState);
 
@@ -211,9 +197,13 @@ namespace Comments.API.Models
                 return BadRequest(ModelState);
             }
 
-            replyFromStore.Name = replyToPatch.Name;
-            replyFromStore.Description = replyToPatch.Description;
+            Mapper.Map(replyToPatch, replyEntity);
 
+            if (!_commentRepository.Save())
+            {
+                return StatusCode(500, "A problem happened while handling your request.");
+            }
+            
             return NoContent();
 
         }
@@ -221,21 +211,27 @@ namespace Comments.API.Models
         [HttpDelete("{commentId}/replies/{id}")]
         public IActionResult DeleteReply(int commentId, int id)
         {
-            var comment = CommentsDataStore.Current.Comments.FirstOrDefault(c => c.Id == commentId);
-            if (comment == null)
+            if (!_commentRepository.CommentExists(commentId))
+            {
+                return NotFound();
+            }
+            
+            var replyEntity = _commentRepository.GetReplyForComment(commentId, id);
+            if (replyEntity == null)
+
             {
                 return NotFound();
             }
 
-            var replyFromStore = comment.Replies.FirstOrDefault(p => p.Id == id);
-            if (replyFromStore == null)
+            _commentRepository.DeleteReply(replyEntity);
+            if (!_commentRepository.Save())
             {
-                return NotFound();
+                return StatusCode(500, "A problem happened while handling your request.");
             }
 
-            comment.Replies.Remove(replyFromStore);
+            //comment.Replies.Remove(replyFromStore);
             _mailService.Send("Reply deleted.",
-                $"Reply {replyFromStore.Name} with id {replyFromStore.Id} was deleted.");
+                $"Reply {replyEntity.Name} with id {replyEntity.Id} was deleted.");
 
 
             return NoContent();
